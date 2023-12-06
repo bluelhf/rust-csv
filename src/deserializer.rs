@@ -205,7 +205,9 @@ impl<'r> DeRecord<'r> for DeStringRecord<'r> {
         visitor: V,
     ) -> Result<V::Value, DeserializeError> {
         let x = self.next_field()?;
-        if x == "true" {
+        // bluelhf start - never infer types
+        visitor.visit_str(x)
+        /*if x == "true" {
             return visitor.visit_bool(true);
         } else if x == "false" {
             return visitor.visit_bool(false);
@@ -225,7 +227,8 @@ impl<'r> DeRecord<'r> for DeStringRecord<'r> {
             visitor.visit_f64(n)
         } else {
             visitor.visit_str(x)
-        }
+        }*/
+        // bluelhf end
     }
 }
 
@@ -296,7 +299,11 @@ impl<'r> DeRecord<'r> for DeByteRecord<'r> {
         visitor: V,
     ) -> Result<V::Value, DeserializeError> {
         let x = self.next_field_bytes()?;
-        if x == b"true" {
+        // bluelhf start - never infer types
+
+        // csv is valid utf8 by spec
+        visitor.visit_str(str::from_utf8(x).map_err(|err| self.error(DEK::InvalidUtf8(err)))?)
+        /*if x == b"true" {
             return visitor.visit_bool(true);
         } else if x == b"false" {
             return visitor.visit_bool(false);
@@ -318,7 +325,8 @@ impl<'r> DeRecord<'r> for DeByteRecord<'r> {
             visitor.visit_str(s)
         } else {
             visitor.visit_bytes(x)
-        }
+        }*/
+        // bluelhf end
     }
 }
 
@@ -747,7 +755,8 @@ impl DeserializeErrorKind {
     }
 }
 
-serde_if_integer128! {
+// bluelhf start - never infer types
+/*serde_if_integer128! {
     fn try_positive_integer128(s: &str) -> Option<u128> {
         s.parse().ok()
     }
@@ -789,7 +798,7 @@ serde_if_integer128! {
 
 fn try_float_bytes(s: &[u8]) -> Option<f64> {
     str::from_utf8(s).ok().and_then(|s| s.parse().ok())
-}
+}*/
 
 #[cfg(test)]
 mod tests {
